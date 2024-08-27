@@ -183,16 +183,16 @@ function calcfdr(spectrogram::AbstractDimSpectrogram, δrn, pad=median; own=fals
 end
 
 function driftchans(dfrow::DataFrameRow)
-    nt = dfrow.numTimesteps
-    c1 = dfrow.index - dfrow.startChannel + 1
-    c2 = c1 + dfrow.driftSteps * nt / nextpow(2, nt)
+    nt = dfrow[:numTimesteps]
+    c1 = dfrow[:index] - dfrow[:startChannel] + 1
+    c2 = c1 + dfrow[:driftSteps] * nt / nextpow(2, nt)
     [c1, c2]
 end
 
 function driftfreqs(dfrow::DataFrameRow)
-    nt = dfrow.numTimesteps
-    f1 = dfrow.frequency
-    f2 = f1 + dfrow.driftRate * dfrow.tsamp * (dfrow.numTimesteps-1) / 1e6
+    nt = dfrow[:numTimesteps]
+    f1 = dfrow[:frequency]
+    f2 = f1 + dfrow[:driftRate] * dfrow[:tsamp] * (nt-1) / 1e6
     [f1, f2]
 end
 
@@ -225,7 +225,7 @@ end
 function plotspectrogram(spectrogram, dfrow, fdr; extra_title="", kwargs...)
     # TODO Add DimArray types for spectrogram and fdr input?
     # TODO Get tlast from time dimension of spectrogram?
-    tlast = dfrow.tsamp * (dfrow.numTimesteps - 1)
+    tlast = dfrow[:tsamp] * (dfrow[:numTimesteps] - 1)
     sf1, sf2 = driftfreqs(dfrow)
     p = heatmap(spectrogram';
         xticks=val(dims(spectrogram,1)[[1,end]]),
@@ -238,7 +238,7 @@ function plotspectrogram(spectrogram, dfrow, fdr; extra_title="", kwargs...)
         xticks=val(dims(fdr,1)[[1,end]]), tickdir=:out
     )
     plot(p, hm; layout=(1,2), widen=false,
-        plot_title="$(dfrow[:host]): Hit $(dfrow.idx)$(extra_title)"
+        plot_title="$(dfrow[:host]): Hit $(dfrow[:idx])$(extra_title)"
     )
 end
 
