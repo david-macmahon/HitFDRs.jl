@@ -1,7 +1,7 @@
-# HitFDRs
+# HitFDRs.jl
 
-A package for calculating and plotting the *frequency-drift-rate* (FDR) matrix
-corresponding to a *Hit* in a Cap'n Proto file.
+A Julia package for calculating and plotting the *frequency-drift-rate* (FDR)
+matrix corresponding to a *Hit* in a Cap'n Proto file.
 
 ## Loading hits
 
