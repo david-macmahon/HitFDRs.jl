@@ -129,15 +129,18 @@ function getrates(zdtws, dfdt=1)
     range(zdtws.r0*dfdt, step=zdtws.δr*dfdt, length=zdtws.Nr)
 end
 
-function padded_copyto!(dst, src, paddist::Type{<:Distribution})
+function padded_copyto!(dst, src, paddist::Distribution)
     overlap = intersect(CartesianIndices(src), CartesianIndices(dst))
     extra_chans = CartesianIndices((size(src,1)+1:size(dst,1), axes(src,2)))
     extra_times = CartesianIndices((axes(dst,1), size(src,2)+1:size(dst,2)))
-    D = fit(paddist, src)
     dst[overlap] .= src[overlap]
-    rand!(D, @view dst[extra_chans])
+    rand!(paddist, @view dst[extra_chans])
     dst[extra_times] .= 0
     dst
+end
+
+function padded_copyto!(dst, src, paddisttype::Type{<:Distribution})
+    padded_copyto!(dst, src, fit(paddisttype, src))
 end
 
 function padded_copyto!(dst, src, paddata::AbstractArray)
