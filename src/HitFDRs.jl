@@ -265,9 +265,7 @@ end
 function plothist(d; nbins=200, kwargs...)
     h = fithist(d; nbins)
     g = fit(Gamma, vec(d))
-    n = length(d)
-    edges = h.edges[1]
-    xx = (edges[1:end-1] .+ edges[2:end]) ./ 2
+    xx = midpoints(h.edges[1])
     @show length(xx) length(h.weights)
     p = scatter(xx, h.weights; label="Data", kwargs...)
     plot!(p, xx, pdf.(g, xx); label="Gamma fit")
