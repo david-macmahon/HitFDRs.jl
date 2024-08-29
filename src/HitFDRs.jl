@@ -235,7 +235,7 @@ function driftfreqrate(fdr::AbstractDimFDR)
     getindex.(dims(fdr), Tuple(peakij))
 end
 
-function plotspectrogram(spectrogram, hitmeta, fdr; extra_title="", kwargs...)
+function plotspectrogram(hitmeta, spectrogram, fdr; extra_title="", kwargs...)
     # TODO Add DimArray types for spectrogram and fdr input?
     # TODO Get tlast from time dimension of spectrogram?
     tlast = hitmeta[:tsamp] * (hitmeta[:numTimesteps] - 1)
