@@ -11,9 +11,6 @@ using Plots
 using Distributions
 using Distributions: rand!
 
-#using LinearAlgebra # for `normalize`, which is extended by Plots and StatsBase
-#using StatsPlots
-
 export loadhitsdf, loadhitsfb, loadhitsdata
 export calcfdr, driftfreq, driftrate, driftfreqrate, calcsnr
 export plotspectrogram, plothist
