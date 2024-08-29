@@ -11,7 +11,7 @@ using Plots
 using Distributions
 using Distributions: rand!
 
-export loadhitsdf, loadhitsfb, loadhitsdata
+export loadhitsmetadata, loadhitsdata, loadhits
 export calcfdr, driftfreq, driftrate, driftfreqrate, calcsnr
 export plotspectrogram, plothist
 
@@ -23,7 +23,7 @@ AbstractDimFDR = AbstractDimArray{T,2,<:FDRDims} where T
 
 ##
 
-function loadhitsdf(reader::CapnpReader)
+function loadhitsmetadata(reader::CapnpReader)
     df = DataFrame(Iterators.map(NamedTuple, reader))
     df.idx = axes(df, 1)
     # Cheater way to get `nfpc` (number of fine channels per coarse channel)
@@ -38,12 +38,12 @@ function loadhitsdf(reader::CapnpReader)
     df
 end
 
-function loadhitsdf(filename::AbstractString)
+function loadhitsmetadata(filename::AbstractString)
     isfile(filename) || return DataFrame()
     stat(filename).size == 0 && return DataFrame()
 
     reader = CapnpReader(SeticoreCapnp.nodata_factory, Hit, filename)
-        df = loadhitsdf(reader)
+        df = loadhitsmetadata(reader)
     finalize(reader)
 
     # Set hitsfile column
@@ -52,12 +52,12 @@ function loadhitsdf(filename::AbstractString)
     df
 end
 
-function loadhitsfb(filename::AbstractString, rescale::Bool=true)
+function loadhits(filename::AbstractString, rescale::Bool=true)
     isfile(filename) || return (DataFrame(), Matrix{Float32}[])
     stat(filename).size == 0 && return (DataFrame(), Matrix{Float32}[])
 
     reader = CapnpReader(Hit, filename)
-        df = loadhitsdf(reader)
+        df = loadhitsmetadata(reader)
         # Calc scalings if rescale is true
         scalings = [1f0]
         if rescale
