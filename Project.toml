@@ -1,7 +1,7 @@
 name = "HitFDRs"
 uuid = "9a800b32-75b6-4821-8650-313cecfd4ac2"
 authors = ["David MacMahon <davidm@astro.berkeley.edu>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
