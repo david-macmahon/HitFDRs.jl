@@ -23,59 +23,75 @@ AbstractDimFDR = AbstractDimArray{T,2,<:FDRDims} where T
 
 ##
 
-function loadhitsdf(filename)
+function loadhitsdf(reader::CapnpReader)
+    df = DataFrame(Iterators.map(NamedTuple, reader))
+    df.idx = axes(df, 1)
+    # Cheater way to get `nfpc` (number of fine channels per coarse channel)
+    df.nfpc .= nextpow(2, maximum(df.index))
+    df.fineChannel = df.coarseChannel .* df.nfpc .+ df.index;
+    # Add dfdt and drstepn columns
+    df.dfdt = 1e6 * df.foff ./ df.tsamp
+    df.drstepn = df.dfdt ./ (nextpow.(2, df.numTimesteps).-1)
+    # Add nint column
+    df.nint = round.(Int, 1e6 .* df.foff .* df.tsamp)
+
+    df
+end
+
+function loadhitsdf(filename::AbstractString)
     isfile(filename) || return DataFrame()
     stat(filename).size == 0 && return DataFrame()
 
     reader = CapnpReader(SeticoreCapnp.nodata_factory, Hit, filename)
-    df = DataFrame(Iterators.map(NamedTuple, reader))
+        df = loadhitsdf(reader)
     finalize(reader)
-    df.idx = axes(df, 1)
-    # Cheater way to get `nfpc` (number of fine channels per coarse channel)
-    nfpc = nextpow(2, maximum(df.index))
-    df.fineChannel = df.coarseChannel .* nfpc .+ df.index;
-    # Set host column if filename contains a `blpn[0-9]+`
-    if contains(filename, r"blpn[0-9]+")
-        df.host .= replace(filename, r".*(blpn[0-9]+).*"=>s"\1")
-    end
+
+    # Set hitsfile column
+    df.hitsfile .= filename
+
     df
 end
 
-function loadhitsfb(filename, rescale::Bool=true)
+function loadhitsfb(filename::AbstractString, rescale::Bool=true)
     isfile(filename) || return (DataFrame(), Matrix{Float32}[])
     stat(filename).size == 0 && return (DataFrame(), Matrix{Float32}[])
 
     reader = CapnpReader(Hit, filename)
-    df = DataFrame()
+        df = loadhitsdf(reader)
+        # Calc scalings if rescale is true
+        scalings = [1f0]
+        if rescale
+            scalings = Float32.(df.nfpc).^2 .* 4 .* df.nint
+        end
+        fbs = loadhitsdata(reader, scalings) 
+    finalize(reader)
+
+    # Set hitsfile column
+    df.hitsfile .= filename
+
+    df, fbs
+end
+
+function loadhitsdata(reader::CapnpReader, scaling=1)
+    # Load hits data
     fbs = map(reader) do hit
-        push!(df, NamedTuple(hit))
         # Create DimArry of hit's filterbank data
         fb = hit.filterbank
         freqs = range(fb.fch1, step=fb.foff, length=fb.numChannels)|>Dim{:Frequency}
         times = range(0.0, step=fb.tsamp, length=fb.numTimesteps)  |>Dim{:Time}
         DimArray(fb.data, (freqs, times))
     end
-    finalize(reader)
 
-    # Add auxilliary columns
-    df.idx = axes(df, 1)
-    # Cheater way to get `nfpc` (number of fine channels per coarse channel)
-    nfpc = nextpow(2, maximum(df.index))
-    df.fineChannel = df.coarseChannel .* nfpc .+ df.index;
-    # Set host column if filename contains a `blpn[0-9]+`
-    if contains(filename, r"blpn[0-9]+")
-        df.host .= replace(filename, r".*(blpn[0-9]+).*"=>s"\1")
+    # Scale hits data
+    foreach(zip(fbs, Iterators.cycle(scaling))) do (d,s)
+        if s != 1 && s != 0
+            # Ensure that we don't scale by a wider float type
+            typed_scaling = convert(eltype(d), s)
+            d ./= typed_scaling
+        end
     end
 
-    if rescale
-        foff = df.foff[1]
-        tsamp = df.tsamp[1]
-        nsti = round(Int, 1e6 * foff * tsamp)
-        scaling = Float32(nfpc)^2 * 4 * nsti
-        scaling != 0 && foreach(d->d./=scaling, fbs)
-    end
-
-    df, fbs
+    fbs
 end
 
 function loadhitsdata(filename, scaling::Real=1)
@@ -83,20 +99,8 @@ function loadhitsdata(filename, scaling::Real=1)
     stat(filename).size == 0 && return Matrix{Float32}[]
 
     reader = CapnpReader(Hit, filename)
-    fbs = map(reader) do hit
-        # Create DimArry of hit's filterbank data
-        fb = hit.filterbank
-        freqs = range(fb.fch1, step=fb.foff, length=fb.numChannels)|>Dim{:Frequency}
-        times = range(0.0, step=fb.tsamp, length=fb.numTimesteps)  |>Dim{:Time}
-        DimArray(fb.data, (freqs, times))
-    end
+        fbs = loadhitsdata(reader, scaling)
     finalize(reader)
-
-    if scaling != 1 && scaling != 0 && !isempty(fbs)
-        # Ensure that we don't scale by a wider float type
-        typed_scaling = convert(eltype(fbs[1]), scaling)
-        foreach(d->d./=typed_scaling, fbs)
-    end
 
     fbs
 end
