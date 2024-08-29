@@ -38,6 +38,12 @@ function loadhitsmetadata(reader::CapnpReader)
     df
 end
 
+"""
+    loadhitsmetadata(filename) -> DataFrame
+
+Load all the `Hit` metadata from hits file `filename` and return as a
+`DataFrame`.
+"""
 function loadhitsmetadata(filename::AbstractString)
     isfile(filename) || return DataFrame()
     stat(filename).size == 0 && return DataFrame()
@@ -52,6 +58,15 @@ function loadhitsmetadata(filename::AbstractString)
     df
 end
 
+"""
+    loadhits(filename; rescale=true) -> metadata, data
+
+Load all the filterbank metadata and data matrices from hits file `filename` and
+return them as `(DataFrame, Vector{DimMatrix})`.  The `DimMatrix` elements will
+have frequency and time axes.  If `rescale` is `true`, then a scaling factor
+will be computed from the metadata and the filterbank data values will all be
+divided by `scaling`.  The default is to rescale.
+"""
 function loadhits(filename::AbstractString; rescale::Bool=true)
     isfile(filename) || return (DataFrame(), Matrix{Float32}[])
     stat(filename).size == 0 && return (DataFrame(), Matrix{Float32}[])
@@ -94,6 +109,16 @@ function loadhitsdata(reader::CapnpReader; scaling=1)
     fbs
 end
 
+"""
+    loadhitsdata(filename; scaling=1) -> Vector{DimMatrix}
+
+Load all the filterbank data matrices from hits file `filename` and return as a
+`Vector{DimMatrix}` with frequency and time axes.  If `scaling` is non-zero,
+(and not 1), then the filterbank data values will all be divided by `scaling`.
+The default is no scaling.  Note that `scaling` can be a scalar value to be
+applied to all filterbank data or a list of values to scale each `DimMatrix`
+independently.
+"""
 function loadhitsdata(filename; scaling::Real=1)
     isfile(filename) || return Matrix{Float32}[]
     stat(filename).size == 0 && return Matrix{Float32}[]
@@ -105,6 +130,23 @@ function loadhitsdata(filename; scaling::Real=1)
     fbs
 end
 
+"""
+    loadhits(filename; rescale=true, pad=Gamma) -> metadata, data, fdrs
+
+Load all the filterbank metadata and data matrices from hits file `filename` and
+compute the frequency drift rate (FDR) plane for each hit.  The results are
+returned as `(filterbank, data, fdrs)`.  `data` and `fdrs` will be
+`Vector[DimMatrix}`.  The `data` elements will have frequency and time axes.
+The `fdrs` elements will have frequency and drift rate axes.
+
+If `rescale` is `true` (the default), then a scaling factor will be computed
+from the metadata and applied to the filterbank data values (before FDR
+calculation).  The frequency drift rate matrices of each hit is computed using a
+drift rate resolution that is calculated from that hit's metatdata.  Each FDR
+will use the padding convention specified by `pad`, which defaults to `Gamma`
+(i.e. pad using random samples from a Gamma distribution fitted to the input
+data).  See `calcfdr` for more info.
+"""
 function loadhitsfdrs(filename; rescale::Bool=true, pad=Gamma)
     df, fbs = loadhits(filename; rescale)
 
