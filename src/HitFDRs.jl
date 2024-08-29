@@ -52,7 +52,7 @@ function loadhitsmetadata(filename::AbstractString)
     df
 end
 
-function loadhits(filename::AbstractString, rescale::Bool=true)
+function loadhits(filename::AbstractString; rescale::Bool=true)
     isfile(filename) || return (DataFrame(), Matrix{Float32}[])
     stat(filename).size == 0 && return (DataFrame(), Matrix{Float32}[])
 
@@ -63,7 +63,7 @@ function loadhits(filename::AbstractString, rescale::Bool=true)
         if rescale
             scalings = Float32.(df.nfpc).^2 .* 4 .* df.nint
         end
-        fbs = loadhitsdata(reader, scalings) 
+        fbs = loadhitsdata(reader; scalings)
     finalize(reader)
 
     # Set hitsfile column
@@ -72,7 +72,7 @@ function loadhits(filename::AbstractString, rescale::Bool=true)
     df, fbs
 end
 
-function loadhitsdata(reader::CapnpReader, scaling=1)
+function loadhitsdata(reader::CapnpReader; scaling=1)
     # Load hits data
     fbs = map(reader) do hit
         # Create DimArry of hit's filterbank data
@@ -94,21 +94,21 @@ function loadhitsdata(reader::CapnpReader, scaling=1)
     fbs
 end
 
-function loadhitsdata(filename, scaling::Real=1)
+function loadhitsdata(filename; scaling::Real=1)
     isfile(filename) || return Matrix{Float32}[]
     stat(filename).size == 0 && return Matrix{Float32}[]
 
     reader = CapnpReader(Hit, filename)
-        fbs = loadhitsdata(reader, scaling)
+        fbs = loadhitsdata(reader; scaling)
     finalize(reader)
 
     fbs
 end
 
-function loadhitsfdrs(filename, rescale::Bool=true, pad=median)
-    df, fbs = loadhits(filename, rescale)
+function loadhitsfdrs(filename; rescale::Bool=true, pad=median)
+    df, fbs = loadhits(filename; rescale)
 
-    fdrs = calcfdr.(fbs, df.drstepn, pad; own=true);
+    fdrs = calcfdr.(fbs, df.drstepn; pad, own=true);
 
     df.fdrsnr = calcsnr.(fdrs)
     freqs_drs = driftfreqrate.(fdrs)
@@ -176,14 +176,14 @@ function padded_copyto!(dst, src, padfunc::Function)
     dst
 end
 
-function calcfdr(spectrogram, δrn, pad=median; own=false)
+function calcfdr(spectrogram, δrn, pad=median, own=false)
     fdrin, fdrws, fdrout = getzdtworkspace(spectrogram, δrn)
     padded_copyto!(fdrin, spectrogram, pad)
     zdtfdr!(fdrout, fdrws, fdrin)
     (own ? copy(fdrout) : fdrout), getrates(fdrws)
 end
 
-function calcfdr(spectrogram::AbstractDimSpectrogram, δrn, pad=median; own=false)
+function calcfdr(spectrogram::AbstractDimSpectrogram, δrn; pad=median, own=false)
     fdrin, fdrws, fdrout = getzdtworkspace(spectrogram, δrn)
     padded_copyto!(fdrin, spectrogram, pad)
     zdtfdr!(fdrout, fdrws, fdrin)
