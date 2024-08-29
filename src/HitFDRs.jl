@@ -231,7 +231,7 @@ function plotspectrogram(spectrogram, dfrow, fdr; extra_title="", kwargs...)
         xticks=val(dims(fdr,1)[[1,end]]), tickdir=:out
     )
     plot(p, hm; layout=(1,2), widen=false,
-        plot_title="$(dfrow[:host]): Hit $(dfrow[:idx])$(extra_title)"
+        plot_title="Hit $(dfrow[:idx])$(extra_title)",
     )
 end
 
