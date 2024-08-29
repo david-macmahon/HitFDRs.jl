@@ -250,7 +250,7 @@ function fithist(d; nbins=200)
 end
 
 function fithist(d::AbstractArray{<:AbstractFloat}; nbins=200)
-    fit(Histogram{Float64}, vec(d); nbins) |> normalize!
+    fit(Histogram, vec(d); nbins) |> normalize!
 end
 
 function plothist(d; nbins=200, kwargs...)
