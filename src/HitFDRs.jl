@@ -103,10 +103,6 @@ function loadhitsdata(filename, scaling::Real=1)
 
     fbs
 end
-    
-function loadhitsdata(obsid, host::String, scaling::Real)
-    loadhitsdata("/mnt/$host/scratch/data/$obsid/seticore_search/guppi_60531_24915_002762_GJ367_0001.hits", scaling)
-end
 
 @memoize function getzdtworkspace(T::Type, nf, nt, r0n, δrn, Nr)
     spectrogram = zeros(T, nf, nt)
@@ -247,11 +243,6 @@ function calcsnr(x; normalize=true)
     m = median(x)
     s = mad(x; center=m, normalize)
     (pkval - m) / s
-end
-
-function symlims(x)
-    lim = maximum(abs, x)
-    (-lim,lim)
 end
 
 function fithist(d; nbins=200)
