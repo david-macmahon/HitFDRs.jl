@@ -11,7 +11,7 @@ using Plots
 using Distributions
 using Distributions: rand!
 
-export loadhitsmetadata, loadhitsdata, loadhits
+export loadhitsmetadata, loadhitsdata, loadhits, loadhitsfdrs
 export calcfdr, driftfreq, driftrate, driftfreqrate, calcsnr
 export plotspectrogram, plothist
 
@@ -103,6 +103,22 @@ function loadhitsdata(filename, scaling::Real=1)
     finalize(reader)
 
     fbs
+end
+
+function loadhitsfdrs(filename, rescale::Bool=true, pad=median)
+    df, fbs = loadhits(filename, rescale)
+
+    fdrs = calcfdr.(fbs, df.drstepn, pad; own=true);
+
+    df.fdrsnr = calcsnr.(fdrs)
+    freqs_drs = driftfreqrate.(fdrs)
+    df.fdrfreq = first.(freqs_drs)
+    df.fdrrate = last.(freqs_drs)
+
+    # Move `hitsfile` column to the end
+    select!(df, Cols(Not(:hitsfile), :hitsfile))
+
+    df, fbs, fdrs
 end
 
 @memoize function getzdtworkspace(T::Type, nf, nt, r0n, δrn, Nr)
