@@ -105,7 +105,7 @@ function loadhitsdata(filename; scaling::Real=1)
     fbs
 end
 
-function loadhitsfdrs(filename; rescale::Bool=true, pad=median)
+function loadhitsfdrs(filename; rescale::Bool=true, pad=Gamma)
     df, fbs = loadhits(filename; rescale)
 
     fdrs = calcfdr.(fbs, df.drstepn; pad, own=true);
@@ -176,14 +176,14 @@ function padded_copyto!(dst, src, padfunc::Function)
     dst
 end
 
-function calcfdr(spectrogram, δrn, pad=median, own=false)
+function calcfdr(spectrogram, δrn, pad=Gamma, own=false)
     fdrin, fdrws, fdrout = getzdtworkspace(spectrogram, δrn)
     padded_copyto!(fdrin, spectrogram, pad)
     zdtfdr!(fdrout, fdrws, fdrin)
     (own ? copy(fdrout) : fdrout), getrates(fdrws)
 end
 
-function calcfdr(spectrogram::AbstractDimSpectrogram, δrn; pad=median, own=false)
+function calcfdr(spectrogram::AbstractDimSpectrogram, δrn; pad=Gamma, own=false)
     fdrin, fdrws, fdrout = getzdtworkspace(spectrogram, δrn)
     padded_copyto!(fdrin, spectrogram, pad)
     zdtfdr!(fdrout, fdrws, fdrin)
