@@ -288,6 +288,7 @@ function plotspectrogram(hitmeta, spectrogram, fdr; extra_title="", kwargs...)
     plot!(p, [sf1, sf2], [0, tlast]; lw=1, la=0.5, widen=false, label="SC")
     fdrf1, fdrrate = driftfreqrate(fdr)
     fdrf2 = fdrf1 + fdrrate * tlast / 1e6
+    fdrf2 = clamp(fdrf2, extrema(dims(fdr,1))...)
     plot!(p, [fdrf1, fdrf2], [0, tlast]; lw=1, la=0.5, ls=:dash, widen=false, label="FDR")
     hm = heatmap(fdr';
         xticks=val(dims(fdr,1)[[1,end]]), tickdir=:out
