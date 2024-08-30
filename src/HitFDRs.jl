@@ -73,12 +73,12 @@ function loadhits(filename::AbstractString; rescale::Bool=true)
 
     reader = CapnpReader(Hit, filename)
         df = loadhitsmetadata(reader)
-        # Calc scalings if rescale is true
-        scalings = [1f0]
+        # Calc scaling if rescale is true
+        scaling = [1f0]
         if rescale
-            scalings = Float32.(df.nfpc).^2 .* 4 .* df.nint
+            scaling = Float32.(df.nfpc).^2 .* 4 .* df.nint
         end
-        fbs = loadhitsdata(reader; scalings)
+        fbs = loadhitsdata(reader; scaling)
     finalize(reader)
 
     # Set hitsfile column
