@@ -169,14 +169,26 @@ end
     spectrogram, zdtws, zeros(T, zdtws.Nf, zdtws.Nr)
 end
 
+@memoize function getdedriftworkspace(T::Type, nf, nt)
+    spectrogram = zeros(T, nf, nt)
+    dedriftws = fftfdr_workspace(spectrogram)
+    spectrogram, dedriftws, zeros(T, nf, nt)
+end
+
 function getzdtworkspace(spectrogram, δrn, T::Type=eltype(spectrogram))
     nf, nt = size(spectrogram)
     rmaxn = (nf-1) / (nt-1)
     # TODO Make sure this doesn't drift too far
     Nr = Int(fld(rmaxn, abs(δrn)))
     r0n = -Nr * abs(δrn)
-    # Make fdr input be twice as wide for zero padding to avoid "wrap around"
+    # Make fdr input have twice as many freqs (for padding to avoid wrap-around)
     getzdtworkspace(T, nextprod((2,3,5), 2nf), nt, r0n, δrn, 2Nr+1)
+end
+
+function getdedriftworkspace(spectrogram, T::Type=eltype(spectrogram))
+    nf, nt = size(spectrogram)
+    # Make fdr input have twice as many freqs (for padding to avoid wrap-around)
+    getdedriftworkspace(T, nextprod((2,3,5), 2nf), nt)
 end
 
 # TODO Move to FrequencyDriftRateTransforms
@@ -251,6 +263,25 @@ function calcfdr(spectrogram::AbstractDimSpectrogram, δrn; pad=Gamma, own=false
     freqdim = dims(spectrogram, 1)
     ratedim = Dim{:DriftRate}(rates)
     DimArray(fdrvw, (freqdim, ratedim))
+end
+
+function _dedrift(spectrogram, normalized_rate, pad=Gamma, own=false)
+    dedriftin, dedriftws, dedriftout = getdedriftworkspace(spectrogram)
+    padded_copyto!(dedriftin, spectrogram, pad)
+    # Load dedriftin into dedriftws
+    fftfdr_workspace!(dedriftws, dedriftin)
+    fdshift!(dedriftout, dedriftws, normalized_rate)
+    dedriftvw = view(dedriftout, parent(axes(spectrogram,1)), :)
+    own ? copy(dedriftvw) : dedriftvw
+end
+
+function dedrift(spectrogram, normalized_rate; pad=Gamma, own=false)
+    _dedrift(spectrogram, normalized_rate, pad, own)
+end
+
+function dedrift(spectrogram::AbstractDimSpectrogram, normalized_rate; pad=Gamma, own=false)
+    dedriftvw = _dedrift(spectrogram, normalized_rate, pad, own)
+    DimArray(dedriftvw, dims(spectrogram))
 end
 
 function driftchans(hitmeta)
