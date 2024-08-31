@@ -218,6 +218,22 @@ function padded_copyto!(dst, src, padfunc::Function)
     dst
 end
 
+function padded_copyto!(dst, src, ::Val{:zero})
+    padded_copyto!(dst, src, zero∘eltype)
+end
+
+function padded_copyto!(dst, src, ::Val{:resample})
+    padded_copyto!(dst, src, src)
+end
+
+function padded_copyto!(_, _, ::Val{S}) where S
+    error("unsupport padding mode: $S")
+end
+
+function padded_copyto!(dst, src, padsym::Symbol)
+    padded_copyto!(dst, src, Val(padsym))
+end
+
 function calcfdr(spectrogram, δrn, pad=Gamma, own=false)
     fdrin, fdrws, fdrout = getzdtworkspace(spectrogram, δrn)
     padded_copyto!(fdrin, spectrogram, pad)
