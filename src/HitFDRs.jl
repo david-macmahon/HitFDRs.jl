@@ -25,7 +25,7 @@ AbstractDimFDR = AbstractDimArray{T,2,<:FDRDims} where T
 
 function loadhitsmetadata(reader::CapnpReader)
     df = DataFrame(Iterators.map(NamedTuple, reader))
-    df.idx = axes(df, 1)
+    df.fileidx = axes(df, 1)
     # Cheater way to get `nfpc` (number of fine channels per coarse channel)
     df.nfpc .= nextpow(2, maximum(df.index))
     df.fineChannel = df.coarseChannel .* df.nfpc .+ df.index;
@@ -294,7 +294,7 @@ function plotspectrogram(hitmeta, spectrogram, fdr; extra_title="", kwargs...)
         xticks=val(dims(fdr,1)[[1,end]]), tickdir=:out
     )
     plot(p, hm; layout=(1,2), widen=false,
-        plot_title="Hit $(hitmeta[:idx])$(extra_title)",
+        plot_title="Hit $(get(hitmeta,:idx,hitmeta[:fileidx]))$(extra_title)"
     )
 end
 
