@@ -12,7 +12,7 @@ using Distributions
 using Distributions: rand!
 
 export loadhitsmetadata, loadhitsdata, loadhits, loadhitsfdrs
-export calcfdr, driftfreq, driftrate, driftfreqrate, calcsnr
+export calcfdr, dedrift, driftfreq, driftrate, driftfreqrate, calcsnr
 export plotspectrogram, plothist
 
 SpectrogramDims = Tuple{Dim{:Frequency},Dim{:Time}}
