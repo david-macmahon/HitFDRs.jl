@@ -31,7 +31,8 @@ function loadhitsmetadata(reader::CapnpReader)
     df.fineChannel = df.coarseChannel .* df.nfpc .+ df.index;
     # Add dfdt and drstepn columns
     df.dfdt = 1e6 * df.foff ./ df.tsamp
-    df.drstepn = df.dfdt ./ (nextpow.(2, df.numTimesteps).-1)
+    # drstepn is the normalized drift rate resolution used by Fast Taylor Tree
+    df.drstepn = 1 ./ (nextpow.(2, df.numTimesteps).-1)
     # Add nint column
     df.nint = round.(Int, 1e6 .* df.foff .* df.tsamp)
 
@@ -259,9 +260,10 @@ function calcfdr(spectrogram, δrn; pad=Gamma, own=false)
 end
 
 function calcfdr(spectrogram::AbstractDimSpectrogram, δrn; pad=Gamma, own=false)
-    fdrvw, rates = _calcfdr(spectrogram, δrn, pad, own)
-    freqdim = dims(spectrogram, 1)
-    ratedim = Dim{:DriftRate}(rates)
+    fdrvw, normalized_rates = _calcfdr(spectrogram, δrn, pad, own)
+    freqdim, timedim = dims(spectrogram)
+    dfdt = 1e6 * step(freqdim) / step(timedim)
+    ratedim = Dim{:DriftRate}(normalized_rates .* dfdt)
     DimArray(fdrvw, (freqdim, ratedim))
 end
 
