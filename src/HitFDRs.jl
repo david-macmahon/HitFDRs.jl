@@ -234,23 +234,23 @@ function padded_copyto!(dst, src, padsym::Symbol)
     padded_copyto!(dst, src, Val(padsym))
 end
 
-function calcfdr(spectrogram, δrn, pad=Gamma, own=false)
+function _calcfdr(spectrogram, δrn, pad=Gamma, own=false)
     fdrin, fdrws, fdrout = getzdtworkspace(spectrogram, δrn)
     padded_copyto!(fdrin, spectrogram, pad)
     zdtfdr!(fdrout, fdrws, fdrin)
-    (own ? copy(fdrout) : fdrout), getrates(fdrws)
+    fdrvw = view(fdrout, parent(axes(spectrogram,1)), :)
+    (own ? copy(fdrvw) : fdrvw), getrates(fdrws)
+end
+
+function calcfdr(spectrogram, δrn; pad=Gamma, own=false)
+    _calcfdr(spectrogram, δrn, pad, own)
 end
 
 function calcfdr(spectrogram::AbstractDimSpectrogram, δrn; pad=Gamma, own=false)
-    fdrin, fdrws, fdrout = getzdtworkspace(spectrogram, δrn)
-    padded_copyto!(fdrin, spectrogram, pad)
-    zdtfdr!(fdrout, fdrws, fdrin)
-    freqs, times = dims(spectrogram)
-    dfdt = 1e6 * step(freqs) / step(times)
-    rates = Dim{:DriftRate}(getrates(fdrws, dfdt))
-    fdrvw = view(fdrout, axes(parent(spectrogram),1), :)
-    fdr = (own ? copy(fdrvw) : fdrvw)
-    DimArray(fdr, (freqs, rates))
+    fdrvw, rates = _calcfdr(spectrogram, δrn, pad, own)
+    freqdim = dims(spectrogram, 1)
+    ratedim = Dim{:DriftRate}(rates)
+    DimArray(fdrvw, (freqdim, ratedim))
 end
 
 function driftchans(hitmeta)
