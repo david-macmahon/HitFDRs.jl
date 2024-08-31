@@ -277,12 +277,12 @@ function _dedrift(spectrogram, normalized_rate, pad=Gamma, own=false)
     own ? copy(dedriftvw) : dedriftvw
 end
 
-function dedrift(spectrogram, normalized_rate; pad=Gamma, own=false)
-    _dedrift(spectrogram, normalized_rate, pad, own)
+function dedrift(spectrogram, rate, dfdt=1; pad=Gamma, own=false)
+    _dedrift(spectrogram, rate/dfdt, pad, own)
 end
 
-function dedrift(spectrogram::AbstractDimSpectrogram, normalized_rate; pad=Gamma, own=false)
-    dedriftvw = _dedrift(spectrogram, normalized_rate, pad, own)
+function dedrift(spectrogram::AbstractDimSpectrogram, rate, dfdt=1; pad=Gamma, own=false)
+    dedriftvw = _dedrift(spectrogram, rate/dfdt, pad, own)
     DimArray(dedriftvw, dims(spectrogram))
 end
 
