@@ -147,7 +147,7 @@ function loadhitsdata(filename; scaling::Real=1)
 end
 
 """
-    loadhits(filename; rescale=true, pad=Gamma) -> metadata, data, fdrs
+    loadhitsfdrs(filename; rescale=true, pad=Gamma) -> metadata, data, fdrs
 
 Load all the filterbank metadata and data matrices from hits file `filename` and
 compute the frequency drift rate (FDR) plane for each hit.  The results are
