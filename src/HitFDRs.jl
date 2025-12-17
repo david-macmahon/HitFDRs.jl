@@ -164,6 +164,9 @@ will use the padding convention specified by `pad`, which defaults to `Gamma`
 data).  See `calcfdr` for more info.
 """
 function loadhitsfdrs(filename; rescale::Bool=true, pad=Gamma)
+    isfile(filename) || return (DataFrame(), Matrix{Float32}[], Matrix{Float32}[])
+    stat(filename).size == 0 && return (DataFrame(), Matrix{Float32}[], Matrix{Float32}[])
+
     df, fbs = loadhits(filename; rescale)
 
     fdrs = calcfdr.(fbs, df.drstepn; pad, own=true);
