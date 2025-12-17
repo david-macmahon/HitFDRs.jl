@@ -113,6 +113,9 @@ function loadhitsdata(reader::CapnpReader; scaling=1)
     # Scale hits data
     foreach(zip(fbs, Iterators.cycle(scaling))) do (d,s)
         if s != 1 && s != 0
+            #any(==(0), d) && @info "filterbank data contains zero"
+            #any(<(0), d) && @info "filterbank data contains negative value"
+
             # Ensure that we don't scale by a wider float type
             typed_scaling = convert(eltype(d), s)
             d ./= typed_scaling
