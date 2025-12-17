@@ -37,6 +37,9 @@ function loadhitsmetadata(reader::CapnpReader)
     df.fileidx = axes(df, 1)
     # Cheater way to get `nfpc` (number of fine channels per coarse channel)
     df.nfpc .= nextpow(2, maximum(df.index))
+    # Add chan_bw column (bandwidth of coarse channel)
+    df.chan_bw = df.foff .* df.nfpc
+    # Add fine channel (within file)
     df.fineChannel = df.coarseChannel .* df.nfpc .+ df.index;
     # Add dfdt and drstepn columns
     df.dfdt = 1e6 * df.foff ./ df.tsamp
