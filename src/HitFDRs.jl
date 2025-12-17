@@ -11,6 +11,7 @@ using Plots
 using Distributions
 using Distributions: rand!
 
+export AbstractDimSpectrogram, AbstractDimFDR, freqoffset
 export loadhitsmetadata, loadhitsdata, loadhits, loadhitsfdrs
 export calcfdr, dedrift, driftfreq, driftrate, driftfreqrate, calcsnr
 export plotspectrogram, plothist
@@ -20,6 +21,14 @@ AbstractDimSpectrogram = AbstractDimArray{T,2,<:SpectrogramDims} where T
 
 FDRDims = Tuple{Dim{:Frequency},Dim{:DriftRate}}
 AbstractDimFDR = AbstractDimArray{T,2,<:FDRDims} where T
+
+function freqoffset(dm::DimMatrix{T,<:Tuple{Dim{:Frequency},Dim}}, fc, scale=1) where T
+    set(dm, Dim{:Frequency}=>Dim{:FrequencyOffset}(scale*(dims(dm,1).-fc)))
+end
+
+function freqoffset(dm::DimMatrix{T,<:Tuple{Dim{:FrequencyOffset},Dim}}, fc, scale=1) where T
+    set(dm, Dim{:FrequencyOffset}=>Dim{:Frequency}(dims(dm,1)./scale.+fc))
+end
 
 ##
 
