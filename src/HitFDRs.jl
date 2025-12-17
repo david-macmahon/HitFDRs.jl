@@ -46,7 +46,7 @@ function loadhitsmetadata(reader::CapnpReader)
     # drstepn is the normalized drift rate resolution used by Fast Taylor Tree
     df.drstepn = 1 ./ (nextpow.(2, df.numTimesteps).-1)
     # Add nint column
-    df.nint = round.(Int, 1e6 .* df.foff .* df.tsamp)
+    df.nint = round.(Int, 1e6 .* abs.(df.foff .* df.tsamp))
 
     df
 end
